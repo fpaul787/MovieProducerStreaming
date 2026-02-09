@@ -1,9 +1,9 @@
 # Databricks notebook source
 # Kafka configuration
-username = dbutils.secrets.get(scope="structured_streaming", key="confluent_api_key")
-password = dbutils.secrets.get(scope="structured_streaming", key="confluent_api_secret")
-kafka_bootstrap_servers = dbutils.secrets.get(scope="structured_streaming", key="confluent_bootstrap_servers")
-kafka_topic = 'topic_car_purchases'
+username = dbutils.secrets.get(scope="movielens", key="confluent_api_key")
+password = dbutils.secrets.get(scope="movielens", key="confluent_api_secret")
+kafka_bootstrap_servers = dbutils.secrets.get(scope="movielens", key="confluent_bootstrap_servers")
+kafka_topic = 'TBD'
 
 # Kafka Consumer
 kafka_config = {
@@ -41,7 +41,7 @@ kafka_df = (
 # COMMAND ----------
 
 # create movie table if not exist with schema
-# save in frantzpaul_tech.movielens schema
+# partitioning by genres may create too many small files, but that is ok but we will fix later
 movie_table_name = "frantzpaul_tech.movielens.movies"
 spark.sql(f"""
 CREATE TABLE IF NOT EXISTS {movie_table_name} (
@@ -53,8 +53,10 @@ USING DELTA
 PARTITIONED BY (genres)
 """)
 
+
 # COMMAND ----------
 
+from pyspark.sql.functions import from_json
 # write stream to movie table
 (
     kafka_df
@@ -63,8 +65,8 @@ PARTITIONED BY (genres)
     .select("movie.*")
     .writeStream
     .format("delta")
-    .option("checkpointLocation", f"/tmp/movielens_big_data/movies/checkpoint")
+    .option("checkpointLocation", f"/dbfs/checkpoints/movielens")
     .option("mergeSchema", "true")
-    .trigger(once=True)
+    .trigger(availableNow=True)
     .table(movie_table_name)
 )
