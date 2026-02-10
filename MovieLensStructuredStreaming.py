@@ -3,11 +3,9 @@
 USERNAME = dbutils.secrets.get(scope="movielens", key="confluent_api_key")
 PASSWORD = dbutils.secrets.get(scope="movielens", key="confluent_api_secret")
 KAFKA_BOOTSTRAP_SERVERS = dbutils.secrets.get(scope="movielens", key="confluent_bootstrap_servers")
-kafka_topic = 'TBD'
 
 # COMMAND ----------
 
-# Define schema
 from pyspark.sql.types import StructType, StructField, StringType, DecimalType, TimestampType
 
 movie_schema = StructType([
@@ -38,6 +36,7 @@ link_schema = StructType([
 
 # COMMAND ----------
 
+from pyspark.sql.functions import from_json
 def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
     """
     Ingest data from Kafka topic to Delta table
@@ -104,25 +103,25 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
 # Cell 4: Process all topics
 topics_config = [
     {
-        "topic": "movies_topic",
+        "topic": "movies_events_test1",
         "schema": movie_schema,
         "table": "frantzpaul_tech.movielens.movies",
         "partition_by": "genres"
     },
     {
-        "topic": "ratings_topic",
+        "topic": "ratings_events_test1",
         "schema": rating_schema,
         "table": "frantzpaul_tech.movielens.ratings",
         "partition_by": None
     },
     {
-        "topic": "tags_topic",
+        "topic": "tags_events_test1",
         "schema": tag_schema,
         "table": "frantzpaul_tech.movielens.tags",
         "partition_by": None
     },
     {
-        "topic": "links_topic",
+        "topic": "links_events_test1",
         "schema": link_schema,
         "table": "frantzpaul_tech.movielens.links",
         "partition_by": None
@@ -144,3 +143,7 @@ for config in topics_config:
     print(f"✓ Completed {config['topic']}")
 
 print(f"\nAll {len(queries)} topics processed successfully!")
+
+# COMMAND ----------
+
+
