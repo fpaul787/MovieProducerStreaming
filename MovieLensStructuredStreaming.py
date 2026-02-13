@@ -71,6 +71,7 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
     partition_clause = f"PARTITIONED BY ({partition_by})" if partition_by else ""
     schema_ddl = ", ".join([f"{field.name} {field.dataType.simpleString().upper()} {'NOT NULL' if not field.nullable else ''}" 
                             for field in schema.fields])
+    non_nullable_fields = [field.name for field in schema.fields if not field.nullable]
     
     spark.sql(f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
@@ -87,7 +88,9 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
         kafka_df
         .selectExpr("CAST(value AS STRING)")
         .select(from_json("value", schema).alias("data"))
+        .filter("data IS NOT NULL")
         .select("data.*")
+        .dropna(subset=non_nullable_fields)
         .writeStream
         .format("delta")
         .option("checkpointLocation", checkpoint_path)
@@ -103,25 +106,25 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
 # Cell 4: Process all topics
 topics_config = [
     {
-        "topic": "movies_events_test1",
+        "topic": "movies_events",
         "schema": movie_schema,
         "table": "frantzpaul_tech.movielens.movies",
         "partition_by": "genres"
     },
     {
-        "topic": "ratings_events_test1",
+        "topic": "ratings_events",
         "schema": rating_schema,
         "table": "frantzpaul_tech.movielens.ratings",
         "partition_by": None
     },
     {
-        "topic": "tags_events_test1",
+        "topic": "tags_events",
         "schema": tag_schema,
         "table": "frantzpaul_tech.movielens.tags",
         "partition_by": None
     },
     {
-        "topic": "links_events_test1",
+        "topic": "links_events",
         "schema": link_schema,
         "table": "frantzpaul_tech.movielens.links",
         "partition_by": None
@@ -130,6 +133,7 @@ topics_config = [
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 5
 queries = []
 for config in topics_config:
     print(f"Starting ingestion for {config['topic']} -> {config['table']}")
