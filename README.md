@@ -25,7 +25,7 @@ The pipeline processes four main data streams:
 
 1. **Movies** (`movies_events`) - Movie metadata including title and genres
 2. **Ratings** (`ratings_events`) - User ratings for movies
-3. **Tags** (`tags_events`) - User-generated tags for movies  
+3. **Tags** (`tags_events`) - User-generated tags for movies
 4. **Links** (`links_events`) - External links to IMDB and TMDB
 
 ## Data Schemas
@@ -38,7 +38,7 @@ The pipeline processes four main data streams:
 ### Ratings
 - `userId` (String): User identifier
 - `movieId` (String): Movie identifier
-- `rating` (Decimal 2,1): Rating value
+- `rating` (Decimal(2,1)): Rating value (2 total digits with 1 decimal place)
 - `timestamp` (Timestamp): Rating timestamp
 
 ### Tags
