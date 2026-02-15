@@ -103,7 +103,6 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
 
 # COMMAND ----------
 
-# Cell 4: Process all topics
 topics_config = [
     {
         "topic": "movies_events",
@@ -147,7 +146,3 @@ for config in topics_config:
     print(f"✓ Completed {config['topic']}")
 
 print(f"\nAll {len(queries)} topics processed successfully!")
-
-# COMMAND ----------
-
-
