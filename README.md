@@ -38,7 +38,7 @@ The pipeline processes four main data streams:
 ### Ratings
 - `userId` (String): User identifier
 - `movieId` (String): Movie identifier
-- `rating` (Decimal(2,1)): Rating value (2 total digits with 1 decimal place)
+- `rating` (Decimal(2,1)): Rating value (supports values 0.0-9.9)
 - `timestamp` (Timestamp): Rating timestamp
 
 ### Tags
