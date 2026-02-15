@@ -90,12 +90,14 @@ The project requires the following Databricks secrets to be configured in the `m
 
 ## Delta Tables
 
-The pipeline creates and populates the following Delta tables:
+The pipeline creates and populates the following Delta tables (customize catalog and schema names for your environment):
 
-- `frantzpaul_tech.movielens.movies`
-- `frantzpaul_tech.movielens.ratings`
-- `frantzpaul_tech.movielens.tags`
-- `frantzpaul_tech.movielens.links`
+- `<catalog>.<schema>.movies` (e.g., `frantzpaul_tech.movielens.movies`)
+- `<catalog>.<schema>.ratings` (e.g., `frantzpaul_tech.movielens.ratings`)
+- `<catalog>.<schema>.tags` (e.g., `frantzpaul_tech.movielens.tags`)
+- `<catalog>.<schema>.links` (e.g., `frantzpaul_tech.movielens.links`)
+
+**Note**: Update the table names in `MovieLensStructuredStreaming.py` to match your Databricks catalog and schema.
 
 ## Key Technologies
 
