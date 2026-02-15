@@ -3,11 +3,9 @@
 USERNAME = dbutils.secrets.get(scope="movielens", key="confluent_api_key")
 PASSWORD = dbutils.secrets.get(scope="movielens", key="confluent_api_secret")
 KAFKA_BOOTSTRAP_SERVERS = dbutils.secrets.get(scope="movielens", key="confluent_bootstrap_servers")
-kafka_topic = 'TBD'
 
 # COMMAND ----------
 
-# Define schema
 from pyspark.sql.types import StructType, StructField, StringType, DecimalType, TimestampType
 
 movie_schema = StructType([
@@ -38,6 +36,7 @@ link_schema = StructType([
 
 # COMMAND ----------
 
+from pyspark.sql.functions import from_json
 def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
     """
     Ingest data from Kafka topic to Delta table
@@ -72,6 +71,7 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
     partition_clause = f"PARTITIONED BY ({partition_by})" if partition_by else ""
     schema_ddl = ", ".join([f"{field.name} {field.dataType.simpleString().upper()} {'NOT NULL' if not field.nullable else ''}" 
                             for field in schema.fields])
+    non_nullable_fields = [field.name for field in schema.fields if not field.nullable]
     
     spark.sql(f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
@@ -88,7 +88,9 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
         kafka_df
         .selectExpr("CAST(value AS STRING)")
         .select(from_json("value", schema).alias("data"))
+        .filter("data IS NOT NULL")
         .select("data.*")
+        .dropna(subset=non_nullable_fields)
         .writeStream
         .format("delta")
         .option("checkpointLocation", checkpoint_path)
@@ -101,28 +103,27 @@ def ingest_kafka_to_delta(topic_name, schema, table_name, partition_by=None):
 
 # COMMAND ----------
 
-# Cell 4: Process all topics
 topics_config = [
     {
-        "topic": "movies_topic",
+        "topic": "movies_events",
         "schema": movie_schema,
         "table": "frantzpaul_tech.movielens.movies",
         "partition_by": "genres"
     },
     {
-        "topic": "ratings_topic",
+        "topic": "ratings_events",
         "schema": rating_schema,
         "table": "frantzpaul_tech.movielens.ratings",
         "partition_by": None
     },
     {
-        "topic": "tags_topic",
+        "topic": "tags_events",
         "schema": tag_schema,
         "table": "frantzpaul_tech.movielens.tags",
         "partition_by": None
     },
     {
-        "topic": "links_topic",
+        "topic": "links_events",
         "schema": link_schema,
         "table": "frantzpaul_tech.movielens.links",
         "partition_by": None
@@ -131,6 +132,7 @@ topics_config = [
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 5
 queries = []
 for config in topics_config:
     print(f"Starting ingestion for {config['topic']} -> {config['table']}")
