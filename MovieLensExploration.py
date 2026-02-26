@@ -20,4 +20,41 @@ display(links)
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC SELECT
+# MAGIC   genre,
+# MAGIC   COUNT(*) AS amount
+# MAGIC FROM (
+# MAGIC   SELECT explode(split(genres, '[|]')) AS genre
+# MAGIC   FROM frantzpaul_tech.movielens.movies
+# MAGIC )
+# MAGIC GROUP BY genre
+# MAGIC ORDER BY amount DESC;
+
+# COMMAND ----------
+
+from pyspark.sql.functions import split, explode
+
+df_genres = movies.select(
+    explode(
+        split("genres", "\\|")
+    ).alias("genre")
+).groupBy("genre").count()
+
+# COMMAND ----------
+
+display(df_genres)
+
+# COMMAND ----------
+
+from pyspark.sql.functions import count
+from pyspark.sql.functions import desc
+df_tags_by_movie = tags.groupBy("movieId").agg(count("tag").alias("amount")).orderBy(desc("amount"))
+
+
+display(df_tags_by_movie)
+
+
+# COMMAND ----------
+
 
