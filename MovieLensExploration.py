@@ -57,4 +57,18 @@ display(df_tags_by_movie)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC What is total count of each user for each tag?
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC -- window function
+# MAGIC -- What is total count of each user for each tag?
+# MAGIC
+# MAGIC
+# MAGIC
+
+# COMMAND ----------
+
 
