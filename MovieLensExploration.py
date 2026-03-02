@@ -13,6 +13,32 @@ links = spark.read.table(links_table)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC # Movies
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.movies;
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.ratings;
+# MAGIC
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.tags;
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.links;
+
+# COMMAND ----------
+
 display(movies)
 display(ratings)
 display(tags)
