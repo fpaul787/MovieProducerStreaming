@@ -10,6 +10,10 @@ This project implements a streaming data pipeline that:
 - Stores data in Delta Lake format for efficient querying and analysis
 - Supports schema enforcement and data validation
 
+## Architecture
+![Architecture Diagram](image.png)
+
+
 ## Features
 
 - **Real-time Ingestion**: Streams data from Kafka topics with configurable offsets
