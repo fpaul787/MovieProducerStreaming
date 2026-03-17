@@ -135,6 +135,13 @@ display(top_movies)
 
 # COMMAND ----------
 
+# DBTITLE 1,Benchmark explanation
+# MAGIC %md
+# MAGIC ## Rigorous Join Benchmark
+# MAGIC Controls for caching, uses `.count()` for full materialization, runs multiple iterations, and keeps both joins in the same API (PySpark).
+
+# COMMAND ----------
+
 # DBTITLE 1,Explore tags — top 20 most used tags
 from pyspark.sql import functions as F
 
