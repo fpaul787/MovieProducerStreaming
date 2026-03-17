@@ -38,11 +38,6 @@ spark.sql(f"DESCRIBE EXTENDED {movie_table}").show(truncate=False)
 
 # COMMAND ----------
 
-# DBTITLE 1,Check auto broadcast join threshold
-spark.conf.get("spark.sql.autoBroadcastJoinThreshold")
-
-# COMMAND ----------
-
 # DBTITLE 1,Display movies table
 display(movies)
 
@@ -81,63 +76,87 @@ display(ratings)
 
 # COMMAND ----------
 
-# DBTITLE 1,Sort-merge join movies and ratings
-# MAGIC %sql
-# MAGIC     
-# MAGIC SELECT movies.movieId, ratings.rating, movies.title
-# MAGIC FROM movielens.movies
-# MAGIC JOIN movielens.ratings
-# MAGIC ON movies.movieId = ratings.movieId;
+# DBTITLE 1,Join movies with ratings
+# Join movies and ratings on movieId
+movies_ratings = movies.join(ratings, on="movieId", how="inner")
+print(f"Joined rows: {movies_ratings.count():,}")
+display(movies_ratings.limit(20))
 
 # COMMAND ----------
 
-# DBTITLE 1,Rigorous join benchmark
-import time
-from pyspark.sql.functions import broadcast
+# DBTITLE 1,Rating distribution
+from pyspark.sql import functions as F
 
-movies_df = spark.table(movie_table)
-ratings_df = spark.table(ratings_table)
-
-NUM_ITERATIONS = 3
-
-# --- Warm-up: read data into memory once ---
-movies_df.count()
-ratings_df.count()
-
-# --- Sort-Merge Join (broadcast disabled) ---
-spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)
-
-smj_times = []
-for i in range(NUM_ITERATIONS):
-    start = time.time()
-    (
-        ratings_df.join(movies_df, on="movieId", how="inner")
-        .select("movieId", "rating", "title")
-        .count()  # force full materialization
-    )
-    smj_times.append(time.time() - start)
-
-# --- Broadcast Join (explicit hint) ---
-spark.conf.set("spark.sql.autoBroadcastJoinThreshold", 10 * 1024 * 1024)
-
-bhj_times = []
-for i in range(NUM_ITERATIONS):
-    start = time.time()
-    (
-        ratings_df.join(broadcast(movies_df), on="movieId", how="inner")
-        .select("movieId", "rating", "title")
-        .count()  # force full materialization
-    )
-    bhj_times.append(time.time() - start)
-
-print(f"Sort-Merge Join  — times: {[f'{t:.2f}s' for t in smj_times]}, avg: {sum(smj_times)/len(smj_times):.2f}s")
-print(f"Broadcast Join   — times: {[f'{t:.2f}s' for t in bhj_times]}, avg: {sum(bhj_times)/len(bhj_times):.2f}s")
-print(f"Speedup: {sum(smj_times)/sum(bhj_times):.1f}x")
+# Rating value distribution
+rating_dist = (
+    ratings
+    .groupBy("rating")
+    .agg(F.count("*").alias("count"))
+    .orderBy("rating")
+)
+display(rating_dist)
 
 # COMMAND ----------
 
-# DBTITLE 1,Display broadcast join result
-display(result)
+# DBTITLE 1,Average rating and count per genre
+from pyspark.sql import functions as F
+
+# Genres are pipe-delimited — explode them into individual rows
+genre_stats = (
+    movies_ratings
+    .withColumn("genre", F.explode(F.split(F.col("genres"), "\\|")))
+    .groupBy("genre")
+    .agg(
+        F.round(F.avg("rating"), 2).alias("avg_rating"),
+        F.count("*").alias("num_ratings"),
+        F.countDistinct("movieId").alias("num_movies")
+    )
+    .orderBy(F.desc("num_ratings"))
+)
+display(genre_stats)
+
+# COMMAND ----------
+
+# DBTITLE 1,Top 20 highest-rated movies (min 100 ratings)
+from pyspark.sql import functions as F
+
+top_movies = (
+    movies_ratings
+    .groupBy("movieId", "title")
+    .agg(
+        F.round(F.avg("rating"), 2).alias("avg_rating"),
+        F.count("*").alias("num_ratings")
+    )
+    .filter(F.col("num_ratings") >= 100)
+    .orderBy(F.desc("avg_rating"), F.desc("num_ratings"))
+    .limit(20)
+)
+display(top_movies)
+
+# COMMAND ----------
+
+# DBTITLE 1,Explore tags — top 20 most used tags
+from pyspark.sql import functions as F
+
+# Most popular tags
+top_tags = (
+    tags
+    .groupBy(F.lower(F.col("tag")).alias("tag_lower"))
+    .agg(F.count("*").alias("count"))
+    .orderBy(F.desc("count"))
+    .limit(20)
+)
+display(top_tags)
+
+# COMMAND ----------
+
+# DBTITLE 1,Explore links table
+from pyspark.sql import functions as F
+
+# Show sample and check for nulls
+print("Sample links data:")
+display(links.limit(10))
+print(f"\nNull tmdbId count: {links.filter(F.col('tmdbId').isNull()).count():,}")
 
 # COMMAND ----------
 
@@ -166,3 +185,7 @@ display(result)
 # MAGIC %sql
 # MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.links;
+
+# COMMAND ----------
+
+
