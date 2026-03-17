@@ -1,4 +1,5 @@
 # Databricks notebook source
+# DBTITLE 1,Define table references
 movie_table = "frantzpaul_tech.movielens.movies"
 ratings_table = "frantzpaul_tech.movielens.ratings"
 tags_table = "frantzpaul_tech.movielens.tags"
@@ -7,6 +8,7 @@ ratings_large_table = "frantzpaul_tech.movielens.ratings_large"
 
 # COMMAND ----------
 
+# DBTITLE 1,Load tables as DataFrames
 movies = spark.read.table(movie_table)
 ratings = spark.read.table(ratings_table)
 ratings_large = spark.read.table(ratings_large_table)
@@ -15,109 +17,77 @@ links = spark.read.table(links_table)
 
 # COMMAND ----------
 
+# DBTITLE 1,Movies section header
 # MAGIC %md
+# MAGIC    
 # MAGIC # Movies
 
 # COMMAND ----------
 
+# DBTITLE 1,Count movies
 # MAGIC %sql
+# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.movies;
 
 # COMMAND ----------
 
+# DBTITLE 1,Compute movies table statistics
 # size of movie table
 spark.sql(f"ANALYZE TABLE {movie_table} COMPUTE STATISTICS")
 spark.sql(f"DESCRIBE EXTENDED {movie_table}").show(truncate=False)
 
 # COMMAND ----------
 
+# DBTITLE 1,Check auto broadcast join threshold
 spark.conf.get("spark.sql.autoBroadcastJoinThreshold")
 
 # COMMAND ----------
 
+# DBTITLE 1,Display movies table
 display(movies)
 
 # COMMAND ----------
 
+# DBTITLE 1,Ratings section header
 # MAGIC %md
+# MAGIC    
 # MAGIC # Ratings
 
 # COMMAND ----------
 
+# DBTITLE 1,Count ratings
 # MAGIC %sql
+# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.ratings;
 
 # COMMAND ----------
 
+# DBTITLE 1,Count ratings_large
 # MAGIC %sql
+# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.ratings_large;
 
 # COMMAND ----------
 
+# DBTITLE 1,Display ratings table
 display(ratings)
 
 # COMMAND ----------
 
+# DBTITLE 1,Join experiment intro
 # MAGIC %md
+# MAGIC    
 # MAGIC Lets do a join on movieId
 
 # COMMAND ----------
 
-spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)
-
-# COMMAND ----------
-
+# DBTITLE 1,Sort-merge join movies and ratings
 # MAGIC %sql
+# MAGIC     
 # MAGIC SELECT movies.movieId, ratings.rating, movies.title
 # MAGIC FROM movielens.movies
 # MAGIC JOIN movielens.ratings
 # MAGIC ON movies.movieId = ratings.movieId;
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC Took 55 seconds. We'll figure out how to make quicker.
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT movies.movieId, ratings_large.rating, movies.title
-# MAGIC FROM movielens.movies
-# MAGIC JOIN movielens.ratings_large
-# MAGIC ON movies.movieId = ratings_large.movieId;
-
-# COMMAND ----------
-
-# Reset back to default 10MB
-spark.conf.set("spark.sql.autoBroadcastJoinThreshold", 10 * 1024 * 1024)
-
-# COMMAND ----------
-
-from pyspark.sql.functions import broadcast
-
-movies_df = spark.table(movie_table)
-ratings_df = spark.table(ratings_table)
-
-result = ratings_df.join(
-    broadcast(movies_df),
-    on="movieId",
-    how="inner"
-).select("movieId", "rating", "title")
-
-
-
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC With broadcast join, operation takes 2s.
-
-# COMMAND ----------
-
-# DBTITLE 1,Benchmark explanation
-# MAGIC %md
-# MAGIC ## Rigorous Join Benchmark
-# MAGIC Controls for caching, uses `.count()` for full materialization, runs multiple iterations, and keeps both joins in the same API (PySpark).
 
 # COMMAND ----------
 
@@ -166,24 +136,33 @@ print(f"Speedup: {sum(smj_times)/sum(bhj_times):.1f}x")
 
 # COMMAND ----------
 
+# DBTITLE 1,Display broadcast join result
 display(result)
 
 # COMMAND ----------
 
+# DBTITLE 1,Tags section header
 # MAGIC %md
+# MAGIC    
 # MAGIC # Tags
 
 # COMMAND ----------
 
+# DBTITLE 1,Count tags
 # MAGIC %sql
+# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.tags;
 
 # COMMAND ----------
 
+# DBTITLE 1,Links section header
 # MAGIC %md
+# MAGIC    
 # MAGIC # Links
 
 # COMMAND ----------
 
+# DBTITLE 1,Count links
 # MAGIC %sql
+# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.links;
