@@ -141,7 +141,7 @@ print(f"Skewed rows:    {skewed_ratings.count():,}")
 
 # DBTITLE 1,Salting experiment — skewed join keys
 NUM_ITERATIONS = 3
-NUM_SALT_BUCKETS = 10
+NUM_SALT_BUCKETS = 3  # keep low on a 1-worker cluster to limit replication overhead
 
 # Disable AQE skew handling so Spark can't auto-compensate
 spark.conf.set("spark.sql.adaptive.skewJoin.enabled", False)
@@ -165,6 +165,9 @@ salted_ratings = skewed_ratings.withColumn("salt", floor(rand() * NUM_SALT_BUCKE
 salted_ratings = salted_ratings.withColumn(
     "salted_key", concat(col("movieId"), lit("_"), col("salt"))
 )
+
+salted_ratings.cache()
+salted_ratings.count()  # materialize — rand() is now frozen
 
 # Replicate the dimension table across all salt buckets
 movies_salted = (
@@ -201,6 +204,7 @@ spark.conf.set("spark.sql.adaptive.skewJoin.enabled", True)
 
 # Clean up cache
 skewed_ratings.unpersist()
+salted_ratings.unpersist()
 
 avg = lambda t: sum(t) / len(t)
 print(f"\n{'Strategy':<25} {'Avg Time':>10}  {'Times'}")
