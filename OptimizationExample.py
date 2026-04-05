@@ -139,6 +139,11 @@ print(f"Skewed rows:    {skewed_ratings.count():,}")
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC Salting is a partitioning strategy whose benefit scales with the number of executors. On a single 2-vCPU node, parallelism is too constrained to observe the improvement. The correct environment to validate salting is a 4+ worker cluster with a large-to-large join where broadcast is not viable.
+
+# COMMAND ----------
+
 # DBTITLE 1,Salting experiment — skewed join keys
 NUM_ITERATIONS = 3
 NUM_SALT_BUCKETS = 3  # keep low on a 1-worker cluster to limit replication overhead
