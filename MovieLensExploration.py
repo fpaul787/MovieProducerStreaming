@@ -153,6 +153,40 @@ display(ratings_year_df)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC # Movie Analysis
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC Rank movies within each genre
+
+# COMMAND ----------
+
+from pyspark.sql.window import Window
+
+# Explode genres and compute avg rating per movie
+movies_genre_avg = (
+    movies_ratings
+    .withColumn("genre", F.explode(F.split(F.col("genres"), "\\|")))
+    .groupBy("genre", "movieId", "title")
+    .agg(F.round(F.avg("rating"), 2).alias("avg_rating"), F.count("*").alias("num_ratings"))
+)
+
+# Define window partitioned by genre, ordered by avg_rating desc
+genre_window = Window.partitionBy("genre").orderBy(F.desc("avg_rating"))
+
+# Add rank and dense_rank columns
+ranked_movies = (
+    movies_genre_avg
+    .withColumn("rank", F.rank().over(genre_window))
+    .withColumn("dense_rank", F.dense_rank().over(genre_window))
+)
+
+display(ranked_movies)
+
+# COMMAND ----------
+
 # DBTITLE 1,Tags section header
 # MAGIC %md
 # MAGIC    
@@ -214,4 +248,10 @@ display(links)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC # Genre Deep Dives
 
+# COMMAND ----------
+
+# Genre combinations — Which multi-genre combinations (e.g., Action|Adventure vs. Drama|Romance) are most common, and do they rate differently?
+# Genre trends over time — Did certain genres peak in production in certain decades (e.g., Westerns in the 60s, Sci-Fi in the 2000s)?
