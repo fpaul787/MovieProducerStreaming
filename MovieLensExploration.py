@@ -17,6 +17,10 @@ links = spark.read.table(links_table)
 
 # COMMAND ----------
 
+from pyspark.sql import functions as F
+
+# COMMAND ----------
+
 # DBTITLE 1,Movies section header
 # MAGIC %md
 # MAGIC    
@@ -28,13 +32,6 @@ links = spark.read.table(links_table)
 # MAGIC %sql
 # MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.movies;
-
-# COMMAND ----------
-
-# DBTITLE 1,Compute movies table statistics
-# size of movie table
-spark.sql(f"ANALYZE TABLE {movie_table} COMPUTE STATISTICS")
-spark.sql(f"DESCRIBE EXTENDED {movie_table}").show(truncate=False)
 
 # COMMAND ----------
 
@@ -85,9 +82,6 @@ display(movies_ratings.limit(20))
 # COMMAND ----------
 
 # DBTITLE 1,Rating distribution
-from pyspark.sql import functions as F
-
-# Rating value distribution
 rating_dist = (
     ratings
     .groupBy("rating")
@@ -135,10 +129,41 @@ display(top_movies)
 
 # COMMAND ----------
 
-# DBTITLE 1,Benchmark explanation
+# Rating trends over time
+ratings_time_df = (
+    ratings
+        .withColumn("date", F.to_date(F.col("timestamp")))
+        .orderBy(F.asc("date"))
+        .drop("timestamp")
+)
+
+display(ratings_time_df)
+
+# COMMAND ----------
+
+# How have rating shifted year to year
+ratings_year_df = (
+    ratings_time_df
+        .withColumn("year", F.year(F.col("date")))
+        .groupBy("year")
+        .agg(F.round(F.avg("rating"), 2).alias("avg_rating"))
+        .orderBy(F.asc("year"))
+)
+display(ratings_year_df)
+
+# COMMAND ----------
+
+# DBTITLE 1,Tags section header
 # MAGIC %md
-# MAGIC ## Rigorous Join Benchmark
-# MAGIC Controls for caching, uses `.count()` for full materialization, runs multiple iterations, and keeps both joins in the same API (PySpark).
+# MAGIC    
+# MAGIC # Tags
+
+# COMMAND ----------
+
+# DBTITLE 1,Count tags
+# MAGIC %sql
+# MAGIC     
+# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.tags;
 
 # COMMAND ----------
 
@@ -157,27 +182,7 @@ display(top_tags)
 
 # COMMAND ----------
 
-# DBTITLE 1,Explore links table
-from pyspark.sql import functions as F
-
-# Show sample and check for nulls
-print("Sample links data:")
-display(links.limit(10))
-print(f"\nNull tmdbId count: {links.filter(F.col('tmdbId').isNull()).count():,}")
-
-# COMMAND ----------
-
-# DBTITLE 1,Tags section header
-# MAGIC %md
-# MAGIC    
-# MAGIC # Tags
-
-# COMMAND ----------
-
-# DBTITLE 1,Count tags
-# MAGIC %sql
-# MAGIC     
-# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.tags;
+display(tags)
 
 # COMMAND ----------
 
@@ -192,6 +197,20 @@ print(f"\nNull tmdbId count: {links.filter(F.col('tmdbId').isNull()).count():,}"
 # MAGIC %sql
 # MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.links;
+
+# COMMAND ----------
+
+# DBTITLE 1,Explore links table
+from pyspark.sql import functions as F
+
+# Show sample and check for nulls
+print("Sample links data:")
+display(links.limit(10))
+print(f"\nNull tmdbId count: {links.filter(F.col('tmdbId').isNull()).count():,}")
+
+# COMMAND ----------
+
+display(links)
 
 # COMMAND ----------
 
