@@ -250,11 +250,17 @@ display(ranked_movies)
 
 # Decade analysis — The title column includes the release year in parentheses. 
 # Extract it with a regex and compare avg ratings by decade.
+movies_decade = (
+    movies_ratings
+        .withColumn('year', F.regexp_extract('title', r'\((\d{4})\)', 1))
+        .filter(F.col('year') != '')
+        .withColumn('decade', (F.col('year').cast('int') / 10).cast('int') * 10)
+        .groupBy('decade')
+        .agg(F.round(F.avg('rating'), 2).alias('avg_rating'), F.count('*').alias('num_movies'))
+        .orderBy(F.desc('avg_rating'))
+)
 
-# COMMAND ----------
-
-# Rating count vs. avg rating — Plot these two dimensions together. 
-# You'll likely see an interesting pattern where very popular movies don't always have the highest ratings.
+display(movies_decade)
 
 # COMMAND ----------
 
