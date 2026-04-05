@@ -153,6 +153,67 @@ display(ratings_year_df)
 
 # COMMAND ----------
 
+# DBTITLE 1,Tags section header
+# MAGIC %md
+# MAGIC    
+# MAGIC # Tags
+
+# COMMAND ----------
+
+# DBTITLE 1,Count tags
+# MAGIC %sql
+# MAGIC     
+# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.tags;
+
+# COMMAND ----------
+
+display(tags)
+
+# COMMAND ----------
+
+# DBTITLE 1,Explore tags — top 20 most used tags
+from pyspark.sql import functions as F
+
+# Most popular tags
+top_tags = (
+    tags
+    .groupBy(F.lower(F.col("tag")).alias("tag_lower"))
+    .agg(F.count("*").alias("count"))
+    .orderBy(F.desc("count"))
+    .limit(20)
+)
+display(top_tags)
+
+# COMMAND ----------
+
+# DBTITLE 1,Links section header
+# MAGIC %md
+# MAGIC    
+# MAGIC # Links
+
+# COMMAND ----------
+
+# DBTITLE 1,Count links
+# MAGIC %sql
+# MAGIC     
+# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.links;
+
+# COMMAND ----------
+
+display(links)
+
+# COMMAND ----------
+
+# DBTITLE 1,Explore links table
+from pyspark.sql import functions as F
+
+# Show sample and check for nulls
+print("Sample links data:")
+display(links.limit(10))
+print(f"\nNull tmdbId count: {links.filter(F.col('tmdbId').isNull()).count():,}")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Movie Analysis
 
@@ -187,64 +248,13 @@ display(ranked_movies)
 
 # COMMAND ----------
 
-# DBTITLE 1,Tags section header
-# MAGIC %md
-# MAGIC    
-# MAGIC # Tags
+# Decade analysis — The title column includes the release year in parentheses. 
+# Extract it with a regex and compare avg ratings by decade.
 
 # COMMAND ----------
 
-# DBTITLE 1,Count tags
-# MAGIC %sql
-# MAGIC     
-# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.tags;
-
-# COMMAND ----------
-
-# DBTITLE 1,Explore tags — top 20 most used tags
-from pyspark.sql import functions as F
-
-# Most popular tags
-top_tags = (
-    tags
-    .groupBy(F.lower(F.col("tag")).alias("tag_lower"))
-    .agg(F.count("*").alias("count"))
-    .orderBy(F.desc("count"))
-    .limit(20)
-)
-display(top_tags)
-
-# COMMAND ----------
-
-display(tags)
-
-# COMMAND ----------
-
-# DBTITLE 1,Links section header
-# MAGIC %md
-# MAGIC    
-# MAGIC # Links
-
-# COMMAND ----------
-
-# DBTITLE 1,Count links
-# MAGIC %sql
-# MAGIC     
-# MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.links;
-
-# COMMAND ----------
-
-# DBTITLE 1,Explore links table
-from pyspark.sql import functions as F
-
-# Show sample and check for nulls
-print("Sample links data:")
-display(links.limit(10))
-print(f"\nNull tmdbId count: {links.filter(F.col('tmdbId').isNull()).count():,}")
-
-# COMMAND ----------
-
-display(links)
+# Rating count vs. avg rating — Plot these two dimensions together. 
+# You'll likely see an interesting pattern where very popular movies don't always have the highest ratings.
 
 # COMMAND ----------
 
@@ -255,3 +265,14 @@ display(links)
 
 # Genre combinations — Which multi-genre combinations (e.g., Action|Adventure vs. Drama|Romance) are most common, and do they rate differently?
 # Genre trends over time — Did certain genres peak in production in certain decades (e.g., Westerns in the 60s, Sci-Fi in the 2000s)?
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Tags & Links Enrichment
+
+# COMMAND ----------
+
+# Tags per genre — 
+# Join tags back to movies and see which genres generate the most tag activity. 
+# Are Drama movies tagged more descriptively than Action movies?
