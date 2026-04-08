@@ -1,5 +1,7 @@
 # Databricks notebook source
 # DBTITLE 1,Define table references
+from pyspark.sql import functions as F
+
 movie_table = "frantzpaul_tech.movielens.movies"
 ratings_table = "frantzpaul_tech.movielens.ratings"
 tags_table = "frantzpaul_tech.movielens.tags"
@@ -17,10 +19,6 @@ links = spark.read.table(links_table)
 
 # COMMAND ----------
 
-from pyspark.sql import functions as F
-
-# COMMAND ----------
-
 # DBTITLE 1,Movies section header
 # MAGIC %md
 # MAGIC    
@@ -30,7 +28,6 @@ from pyspark.sql import functions as F
 
 # DBTITLE 1,Count movies
 # MAGIC %sql
-# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.movies;
 
 # COMMAND ----------
@@ -49,14 +46,12 @@ display(movies)
 
 # DBTITLE 1,Count ratings
 # MAGIC %sql
-# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.ratings;
 
 # COMMAND ----------
 
 # DBTITLE 1,Count ratings_large
 # MAGIC %sql
-# MAGIC     
 # MAGIC SELECT COUNT(*) FROM frantzpaul_tech.movielens.ratings_large;
 
 # COMMAND ----------
@@ -129,6 +124,7 @@ display(top_movies)
 
 # COMMAND ----------
 
+# DBTITLE 1,Rating trends over time
 # Rating trends over time
 ratings_time_df = (
     ratings
@@ -141,6 +137,7 @@ display(ratings_time_df)
 
 # COMMAND ----------
 
+# DBTITLE 1,Average rating by year
 # How have rating shifted year to year
 ratings_year_df = (
     ratings_time_df
@@ -167,6 +164,7 @@ display(ratings_year_df)
 
 # COMMAND ----------
 
+# DBTITLE 1,Display tags table
 display(tags)
 
 # COMMAND ----------
@@ -200,6 +198,7 @@ display(top_tags)
 
 # COMMAND ----------
 
+# DBTITLE 1,Display links table
 display(links)
 
 # COMMAND ----------
@@ -214,16 +213,21 @@ print(f"\nNull tmdbId count: {links.filter(F.col('tmdbId').isNull()).count():,}"
 
 # COMMAND ----------
 
+# DBTITLE 1,Movie Analysis section header
 # MAGIC %md
+# MAGIC    
 # MAGIC # Movie Analysis
 
 # COMMAND ----------
 
+# DBTITLE 1,Rank movies within each genre intro
 # MAGIC %md
+# MAGIC    
 # MAGIC Rank movies within each genre
 
 # COMMAND ----------
 
+# DBTITLE 1,Rank movies by avg rating within genre
 from pyspark.sql.window import Window
 
 # Explode genres and compute avg rating per movie
@@ -248,6 +252,7 @@ display(ranked_movies)
 
 # COMMAND ----------
 
+# DBTITLE 1,Average rating by decade
 # Decade analysis — The title column includes the release year in parentheses. 
 # Extract it with a regex and compare avg ratings by decade.
 movies_decade = (
@@ -264,21 +269,27 @@ display(movies_decade)
 
 # COMMAND ----------
 
+# DBTITLE 1,Genre Deep Dives section header
 # MAGIC %md
+# MAGIC    
 # MAGIC # Genre Deep Dives
 
 # COMMAND ----------
 
+# DBTITLE 1,Genre combinations and trends TODO
 # Genre combinations — Which multi-genre combinations (e.g., Action|Adventure vs. Drama|Romance) are most common, and do they rate differently?
 # Genre trends over time — Did certain genres peak in production in certain decades (e.g., Westerns in the 60s, Sci-Fi in the 2000s)?
 
 # COMMAND ----------
 
+# DBTITLE 1,Tags and Links Enrichment section header
 # MAGIC %md
+# MAGIC    
 # MAGIC # Tags & Links Enrichment
 
 # COMMAND ----------
 
+# DBTITLE 1,Tags per genre TODO
 # Tags per genre — 
 # Join tags back to movies and see which genres generate the most tag activity. 
 # Are Drama movies tagged more descriptively than Action movies?
