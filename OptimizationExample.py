@@ -1,4 +1,22 @@
 # Databricks notebook source
+# DBTITLE 1,Notebook summary
+# MAGIC %md
+# MAGIC # Join Optimization Benchmark
+# MAGIC
+# MAGIC A hands-on study of Spark join strategies using the **MovieLens** dataset (`frantzpaul_tech.movielens`). The notebook joins a large ratings fact table against a small movies dimension table under different configurations and measures wall-clock time across 3 iterations each.
+# MAGIC
+# MAGIC **Baseline benchmarks** (cells 3–4) — Compare Sort-Merge Join (SMJ) vs Broadcast Hash Join (BHJ) on both the standard `ratings` table and the larger `ratings_large` table. Broadcast is disabled via `autoBroadcastJoinThreshold = -1` to force SMJ, then re-enabled with an explicit `broadcast()` hint for BHJ.
+# MAGIC
+# MAGIC **Experiment 1 — Salting** (cells 5–8) — Simulates extreme partition skew by duplicating ratings 200× for the top 3 most-rated movies, then benchmarks plain SMJ, salted SMJ (3 buckets), and BHJ. AQE skew handling is disabled to prevent Spark from auto-compensating. Includes a note that salting is a multi-executor optimization and shows limited benefit on a single-worker cluster.
+# MAGIC
+# MAGIC **Experiment 2 — Caching** (cells 9–10) — Isolates how much of SMJ’s cost is storage I/O vs shuffle by persisting the fact table with `MEMORY_AND_DISK` before re-running the join.
+# MAGIC
+# MAGIC **Experiment 3 — Repartition sweep** (cells 11–12) — Runs SMJ with partition counts of 4, 16, 50, 100, and 200 to show the trade-off between too-large partitions (disk spill) and too-many partitions (scheduling overhead).
+# MAGIC
+# MAGIC **Experiment 4 — Spark UI guide** (cell 13) — Reference for reading the DAG: what Exchange, Sort, and BroadcastExchange nodes look like in SMJ vs BHJ, and how to spot skew and shuffle cost in the Stages tab.
+
+# COMMAND ----------
+
 movie_table = "frantzpaul_tech.movielens.movies"
 ratings_table = "frantzpaul_tech.movielens.ratings"
 ratings_large_table = "frantzpaul_tech.movielens.ratings_large"

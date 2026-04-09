@@ -1,4 +1,22 @@
 # Databricks notebook source
+# DBTITLE 1,Notebook summary
+# MAGIC %md
+# MAGIC # MovieLens Exploration
+# MAGIC
+# MAGIC An EDA notebook on the **MovieLens** dataset (`frantzpaul_tech.movielens`) covering five tables: `movies`, `ratings`, `ratings_large`, `tags`, and `links`.
+# MAGIC
+# MAGIC **Data setup** — All tables are loaded as DataFrames in cells 2–3 and referenced throughout.
+# MAGIC
+# MAGIC **Ratings analysis** — The bulk of the notebook. We join movies → ratings, then explore rating distribution, average rating per genre (exploded from pipe-delimited strings), the top 20 highest-rated films (min 100 ratings), and time-series trends (daily and year-over-year).
+# MAGIC
+# MAGIC **Tags & Links** — Light exploration: top 20 most-used tags (case-insensitive), sample link records, and a null audit on `tmdbId`.
+# MAGIC
+# MAGIC **Movie Analysis** — Window functions (`RANK` / `DENSE_RANK`) to rank movies within each genre by average rating, plus a decade-level breakdown extracted from title year.
+# MAGIC
+# MAGIC **Still TODO** — Genre combination frequency & cross-decade production trends; tag activity comparison across genres.
+
+# COMMAND ----------
+
 # DBTITLE 1,Define table references
 from pyspark.sql import functions as F
 
