@@ -32,37 +32,10 @@ The pipeline processes four main data streams:
 3. **Tags** (`tags_events`) - User-generated tags for movies
 4. **Links** (`links_events`) - External links to IMDB and TMDB
 
-## Data Schemas
-
-### Movies
-- `movieId` (String): Unique movie identifier
-- `title` (String): Movie title
-- `genres` (String): Movie genres (partitioned)
-
-### Ratings
-- `userId` (String): User identifier
-- `movieId` (String): Movie identifier
-- `rating` (Decimal(2,1)): Rating value (supports values 0.0-9.9)
-- `timestamp` (Timestamp): Rating timestamp
-
-### Tags
-- `userId` (String): User identifier
-- `movieId` (String): Movie identifier
-- `tag` (String): User-defined tag
-- `timestamp` (Timestamp): Tag timestamp
-
-### Links
-- `movieId` (String): Movie identifier
-- `imdbId` (String): IMDB identifier
-- `tmdbId` (String): TMDB identifier (optional)
-
 ## Prerequisites
 
 - Databricks workspace
-- Apache Spark with Structured Streaming support
 - Kafka cluster (Confluent Cloud or similar)
-- Delta Lake enabled catalog
-- Databricks secrets configured for Kafka authentication
 
 ## Configuration
 
@@ -91,32 +64,6 @@ The project requires the following Databricks secrets to be configured in the `m
 1. Import `MovieLensExploration.py` into your Databricks workspace
 2. Run the notebook to query and explore the ingested data
 3. Use Databricks SQL or notebooks to perform analytics on the Delta tables
-
-## Delta Tables
-
-The pipeline creates and populates the following Delta tables (customize catalog and schema names for your environment):
-
-- `<catalog>.<schema>.movies` (e.g., `frantzpaul_tech.movielens.movies`)
-- `<catalog>.<schema>.ratings` (e.g., `frantzpaul_tech.movielens.ratings`)
-- `<catalog>.<schema>.tags` (e.g., `frantzpaul_tech.movielens.tags`)
-- `<catalog>.<schema>.links` (e.g., `frantzpaul_tech.movielens.links`)
-
-**Note**: Update the table names in `MovieLensStructuredStreaming.py` to match your Databricks catalog and schema.
-
-## Key Technologies
-
-- **Apache Spark**: Distributed data processing engine
-- **Structured Streaming**: Real-time stream processing framework
-- **Delta Lake**: Storage layer providing ACID transactions
-- **Apache Kafka**: Distributed event streaming platform
-- **Databricks**: Unified analytics platform
-
-## Error Handling
-
-- Automatic handling of malformed JSON records
-- Null value filtering for non-nullable fields
-- `failOnDataLoss` set to false for handling Kafka topic issues
-- Checkpoint-based recovery for fault tolerance
 
 ## License
 
